@@ -2,7 +2,7 @@
 title: "Week 1 - Solving DEs - Self"
 author: "Sixtus Dakurah"
 date: "3/24/2020"
-output: html_document
+output: pdf_document
 ---
 
 ---
