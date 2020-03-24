@@ -1,0 +1,129 @@
+---
+title: "Week 1- Solving the Des"
+author: "Sixtus Dakurah"
+date: "3/24/2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(tinytex.verbose = TRUE)
+library(deSolve)
+library(ggplot2)
+```
+
+
+```{r}
+# defining model parameters
+
+# initialized params and state variables here ... these are fixed nnonetheless
+alpha.0 = 1/3; beta.0 = 0.5; N.0=7900000; prop.val <- FALSE; delta <- 1
+times <- seq(0, 150, by = delta)
+
+S.0 = 7900000; I.0 = 10; R.0 = 0
+  
+# alpha: recovery rate, beta: contacts per given time sufficient for spread
+params <- c(alpha = alpha.0, beta = beta.0, N=N.0)
+
+# state variables
+if(prop.val){
+  state <- c(S = S.0/N.0, I=I.0/N.0, R = R.0/N.0)
+}else{
+  state <- c(S = S.0, I=I.0, R = R.0)
+}
+```
+
+
+```{r}
+# function to return the rates of change
+
+RateOfChange <- function(t, state, params)
+{
+
+  # convert the rates into named list
+  with(as.list(c(state, params)), {
+    
+    # rate of change of subsceptible population
+    dS <- -beta*(S/N)*I
+    # rate of change of the infectious population
+    dI <- beta*(S/N)*I - alpha*I
+    # rate of change of the recovered population
+    dR <- alpha*I
+    
+    # return the rate of change
+    list(c(dS, dI, dR))
+    
+  })
+    
+}
+```
+
+
+```{r}
+# run the model
+out <- ode(y = state, times = times, func = RateOfChange, parms = params)
+head(out)
+```
+
+
+```{r}
+# make a combine plot
+dat <- data.frame(out)
+ggplot(data = dat, aes(time)) + geom_line(aes(y = S, colour = "blue")) + 
+  geom_line(aes(y = I, colour = "red")) + 
+  geom_line(aes(y = R, colour = "green")) 
+```
+
+
+```{r}
+
+# self implementation
+
+RateOfChange.Self <- function(times, state, params)
+{
+  df <- data.frame(time = times)
+  S.list <- c(NULL); I.list <- c(NULL); R.list <- c(NULL)
+  # convert the rates into named list
+  
+  with(as.list(c(state, params)), {
+    for (time in times){
+      # this is to ensure that the first values are the initials
+      # update the variables 1
+      S.list <- c(S.list, S); I.list <- c(I.list, I); R.list <- c(R.list, R); 
+      
+      # rate of change of subsceptible population
+      S.change <- S*(1 - delta*beta*(I/N))
+      #dS <- (S.change - S)/delta
+      
+      # rate of change of the recovered population
+      #dR <- alpha*I
+      R.change <- R + delta*alpha*I
+      
+      # rate of change of the infectious population
+      I.change <- N - S.change - R.change
+      #dI <- beta*(S/N)*I - alpha*I
+      
+      # update the variables 2 
+      S <- S.change; I <- I.change; R <- R.change
+      
+    }
+    
+    df$S <- S.list; df$I <- I.list; df$R <- R.list
+    return(df)
+  })
+  
+}
+
+```
+
+```{r}
+data <- RateOfChange.Self(times, state, params)
+head(data)
+```
+
+```{r}
+# make a combine plot
+ggplot(data = data, aes(time)) + geom_line(aes(y = S, colour = "blue")) + 
+  geom_line(aes(y = I, colour = "red")) + 
+  geom_line(aes(y = R, colour = "green")) 
+```
