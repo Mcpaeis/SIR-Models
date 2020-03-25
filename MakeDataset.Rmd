@@ -89,6 +89,10 @@ data.init <- corpus_raw %>% filter(
 ```
 
 ```{r}
+county<- c("Barnstable","Berkshire","Berkshire","Bristol","Bristol","Dukes","Essex","Franklin","Hampden","Hampshire","Middlesex","Nantucket","Nantucket","Norfolk","Plymouth","Suffolk","Worcester","Unknown")
+```
+
+```{r}
 data.init$text <- as.character(data.init$text)
 (data.init)
 ```
