@@ -83,10 +83,12 @@ data.init <- corpus_raw %>% filter(
     grepl("Norfolk", text, ignore.case = TRUE)|
     grepl("Plymouth", text, ignore.case = TRUE)|
     grepl("Suffolk", text, ignore.case = TRUE)|
-    grepl("Worcester", text, ignore.case = TRUE)
+    grepl("Worcester", text, ignore.case = TRUE)|
+    grepl("Unknown", text, ignore.case = TRUE)
   
 )
 ```
+
 
 ```{r}
 data.init$text <- as.character(data.init$text)
@@ -103,6 +105,18 @@ data2 <- data.frame(
   "Presumptive" = c(0), "Total" =c(0),
   "PatientsHospitalized" =c(0),"PatientsNotHospitalized" = c(0),
   "UnderInvestigation"  = c(0), stringsAsFactors = FALSE)
+
+county.data <- data.frame(
+  
+  "file" = c(NULL),
+  
+  for (cty in county){
+    ctr = c(NULL)
+  },
+  
+  "date" = c(NULL)
+  
+)
 
 for (id in unique.ids)
   
@@ -159,6 +173,7 @@ for (id in unique.ids)
         {
           uinv <- gsub("^[[:space:]]+", '', gsub("[^[:digit:][:space:]]", '', sub.set$text[val]) )
       }
+      
       
     }
     
