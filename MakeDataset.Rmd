@@ -1,0 +1,168 @@
+---
+title: "Make Dataset"
+author: "Sixtus Dakurah"
+date: "3/24/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+rm(list=ls())
+library(tidyr)
+library(pdftools)
+library(plyr)
+library(tidyverse)
+library(readr)
+library(tidytext)
+library(miscTools)
+library(stringi)
+```
+
+```{r}
+# set pdf files path
+path.files <- "data-files/covid"
+
+# check store files
+file_vector <- list.files(path = path.files)
+# get a head view
+file_vector %>% head()
+```
+
+```{r}
+# return the relevant files
+pdf_list <- file_vector[grepl("covid-19-case-report", file_vector)]
+#pdf_list
+```
+
+```{r}
+# read the pdf text
+#pdf_text("data-files/covid/covid-19-case-report-3-10-2020.pdf") %>% strsplit(split = "\n")
+```
+
+```{r}
+corpus_raw <- data.frame("file" = c(NULL),"text" = c(NULL))
+ 
+for (i in 1:length(pdf_list))
+  {
+    document_text <-  pdf_text(paste(path.files, "/", pdf_list[i], sep = "")) %>% readr::read_lines()
+    
+    document <- data.frame("file" = rep(gsub(x =pdf_list[i], pattern = ".pdf", replacement = ""), length(document_text) ), "text" =document_text)
+  
+    corpus_raw <- rbind(corpus_raw, document) 
+  }
+```
+
+```{r}
+head(corpus_raw)
+```
+
+```{r}
+data.init <- corpus_raw %>% filter(
+  
+  grepl(( "As of"), text, ignore.case = TRUE)|
+    grepl(("Total confirmed and presumptive positive cases"),text, ignore.case = TRUE)|
+    grepl(( "Confirmed"),text, ignore.case = TRUE)|
+    grepl(("Presumptive"), text, ignore.case = TRUE)|
+    grepl(("Total"), text, ignore.case = TRUE)|
+    grepl(("Patient was hospitalized"), text, ignore.case = TRUE)|
+    grepl(("Patient was not hospitalized"), text, ignore.case = TRUE)|
+    # for some reason investigation is messed up
+    grepl(("Under Investigation"), text, ignore.case = TRUE)
+  
+)
+```
+
+```{r}
+data.init$text <- as.character(data.init$text)
+head(data.init)
+```
+
+```{r}
+# get the unique ids
+unique.ids <- unique(data.init$file)
+
+data2 <- data.frame(
+  "File" = c("Initial"), "DateChar" = c("Initial"), "DateNum" = c("Initial"),
+  "TotalConfirmed" = c(0), "Confirmed" = c(0), 
+  "Presumptive" = c(0), "Total" =c(0),
+  "PatientsHospitalized" =c(0),"PatientsNotHospitalized" = c(0),
+  "UnderInvestigation"  = c(0), stringsAsFactors = FALSE)
+
+for (id in unique.ids)
+  
+  {
+    sub.set <- data.init[data.init$file==id, ]
+    # total confirmed cases
+    len.list <- dim(sub.set)[1]
+    #print(len.list)
+    date.char <- NA; date.num <- NA; tcf <- NA; conf <- NA; pres <- NA
+    total <- NA; ph <- NA; pnh <- NA; uinv <- NA;
+    #print(len.list)
+    for (val in c(1:len.list))
+    {
+      #char <- gsub("^[[:space:]]+", '', gsub("[^[:alpha:][:space:]]", '', sub.set$text[val])  )
+      char <- gsub("[^[:alpha:][:space:]]", '', sub.set$text[val])
+      char <- gsub("^[[:space:]]+", '', char)
+      char <- gsub("[[:space:]]*$", '', char)
+      #print(char)
+      
+      if (str_detect(char, "As of"))
+        {
+         date.char <- char
+         #print(date.char)
+         date.num <- gsub("^[[:space:]]+", '', gsub("[^[:digit:][:space:]]", '', sub.set$text[val]) )
+         #print(date.num)
+        }
+      else if (char == "Total confirmed and presumptive positive cases" | char =="Confirmed Cases Reported")
+        {
+          tcf <- gsub("^[[:space:]]+", '', gsub("[^[:digit:][:space:]]", '', sub.set$text[val]) )
+          #print(tcf)
+        }
+      else if (char == "Confirmed")
+        {
+          conf <- gsub("^[[:space:]]+", '', gsub("[^[:digit:][:space:]]", '', sub.set$text[val]) )
+          #print(conf)
+        }
+      else if (char == "Presumptive")
+        {
+          pres <- gsub("^[[:space:]]+", '', gsub("[^[:digit:][:space:]]", '', sub.set$text[val]) )
+        }
+      else if (char == "Total")
+        {
+          total <- gsub("^[[:space:]]+", '', gsub("[^[:digit:][:space:]]", '', sub.set$text[val]) )
+        }
+      else if (char == "Patient was hospitalized")
+        {
+          ph <- gsub("^[[:space:]]+", '', gsub("[^[:digit:][:space:]]", '', sub.set$text[val]) )
+        }
+      else if (char == "Patient was not hospitalized")
+        {
+          pnh <- gsub("^[[:space:]]+", '', gsub("[^[:digit:][:space:]]", '', sub.set$text[val]) )
+        }
+      else if (char=="Under Investigation" | char=="Under investigation")
+        {
+          uinv <- gsub("^[[:space:]]+", '', gsub("[^[:digit:][:space:]]", '', sub.set$text[val]) )
+      }
+      
+    }
+    
+    vec.vals <- c(id, date.char, date.num, as.double(tcf), as.double(conf), as.double(pres), as.double(total), as.double(ph), as.double(pnh), as.double(uinv) )
+    
+    #print(vec.vals)
+    #print(conf)
+    
+    data2 <- rbind(data2, vec.vals)
+  }
+```
+
+```{r}
+data2["Date"] <- paste(data2$DateChar, data2$DateNum)
+data2
+```
+
+```{r}
+drops <- c("DateChar","DateNum")
+Data.Final <- data2[ , !(names(data2) %in% drops)]
+View(Data.Final)
+```
+
