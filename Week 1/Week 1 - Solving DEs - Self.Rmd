@@ -49,6 +49,7 @@ RateOfChange.Self <- function(times, state, params)
   # convert the rates into named list
   
   with(as.list(c(state, params)), {
+    # loop through the time sequence
     for (time in times){
       # this is to ensure that the first values are the initials
       # update the variables 1
@@ -78,6 +79,9 @@ RateOfChange.Self <- function(times, state, params)
 }
 
 ```
+
+
+
 
 ```{r}
 data <- RateOfChange.Self(times, state, params)

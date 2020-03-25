@@ -8,28 +8,26 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 rm(list=ls())
-library(tidyr)
-library(pdftools)
-library(plyr)
-library(tidyverse)
-library(readr)
-library(tidytext)
-library(miscTools)
-library(stringi)
+library(tidyr); library(pdftools); library(plyr)
+library(tidyverse); library(readr); library(tidytext)
+library(miscTools); library(stringi); library(rio)
 ```
 
 
 ```{r}
-# set pdf files path
+# set pdf files path 
 path.files <- "data-files/covid"
 
-# check store files
+# check stored files
 file_vector <- list.files(path = path.files)
 # get a head view
 file_vector %>% head()
 ```
 
 ```{r}
+###########
+#### Important Naming Convention for all the pdf files you want to extract the relevant data
+
 # return the relevant files
 pdf_list <- file_vector[grepl("covid-19-case-report", file_vector)]
 #pdf_list
@@ -91,13 +89,15 @@ data.init <- corpus_raw %>% filter(
 
 
 ```{r}
-county<- c("Barnstable","Berkshire","Berkshire","Bristol","Bristol","Dukes","Essex","Franklin","Hampden","Hampshire","Middlesex","Nantucket","Nantucket","Norfolk","Plymouth","Suffolk","Worcester","Unknown")
+county<- c("Barnstable","Berkshire", "Bristol","Dukes","Essex","Franklin","Hampden","Hampshire","Middlesex", "Nantucket","Norfolk","Plymouth","Suffolk","Worcester","Unknown")
 ```
+
 
 ```{r}
 data.init$text <- as.character(data.init$text)
-(data.init)
+head(data.init)
 ```
+
 
 ```{r}
 # get the unique ids
@@ -111,15 +111,7 @@ data2 <- data.frame(
   "UnderInvestigation"  = c(0), stringsAsFactors = FALSE)
 
 county.data <- data.frame(
-  
-  "file" = c(NULL),
-  
-  for (cty in county){
-    ctr = c(NULL)
-  },
-  
-  "date" = c(NULL)
-  
+  "File" = c("Initial"), "Barnstable" = c(0), "Berkshire"= c(0), "Bristol"=c(0), "Dukes"=c(0),"Essex"=c(0), "Franklin"=c(0), "Hampden"=c(0),"Hampshire"=c(0),"Middlesex"=c(0), "Nantucket"=c(0),"Norfolk"=c(0),"Plymouth"=c(0),"Suffolk"=c(0),"Worcester"=c(0),"Unknown"=c(0), stringsAsFactors = FALSE
 )
 
 for (id in unique.ids)
@@ -132,6 +124,13 @@ for (id in unique.ids)
     date.char <- NA; date.num <- NA; tcf <- NA; conf <- NA; pres <- NA
     total <- NA; ph <- NA; pnh <- NA; uinv <- NA;
     #print(len.list)
+    
+    # create county level initial holders
+    Barnstable <- NA; Berkshire <- NA;Bristol<-NA; 
+    Dukes <- NA; Essex<- NA; Franklin<- NA; Hampden<- NA; Hampshire <- NA;
+    Middlesex<- NA; Nantucket <- NA; Norfolk <- NA; 
+    Plymouth <- NA; Suffolk <- NA; Worcester <- NA; Unknown <- NA
+    
     for (val in c(1:len.list))
     {
       #char <- gsub("^[[:space:]]+", '', gsub("[^[:alpha:][:space:]]", '', sub.set$text[val])  )
@@ -177,27 +176,75 @@ for (id in unique.ids)
         {
           uinv <- gsub("^[[:space:]]+", '', gsub("[^[:digit:][:space:]]", '', sub.set$text[val]) )
       }
-      
-      
+      else if (char %in% county)
+        {
+          conf.cases <- gsub("^[[:space:]]+", '', gsub("[^[:digit:][:space:]]", '', sub.set$text[val]) )
+          
+          if (char == county[1]){
+            Barnstable <- conf.cases
+          } else if(char==county[2]){
+            Berkshire <- conf.cases
+          }else if(char==county[3]){
+            Bristol <- conf.cases
+          }else if(char==county[4]){
+            Dukes <- conf.cases
+          }else if(char==county[5]){
+            Essex <- conf.cases
+          }else if(char==county[6]){
+            Franklin <- conf.cases
+          }else if(char==county[7]){
+            Hampden <- conf.cases
+          }else if(char==county[8]){
+            Hampshire <- conf.cases
+          }else if(char==county[9]){
+            Middlesex <- conf.cases
+          }else if(char==county[10]){
+            Nantucket <- conf.cases
+          }else if(char==county[11]){
+            Norfolk <- conf.cases
+          }else if(char==county[12]){
+            Plymouth <- conf.cases
+          }else if(char==county[13]){
+            Suffolk <- conf.cases
+          }else if(char==county[14]){
+            Worcester <- conf.cases
+          }else if(char==county[15]){
+            Unknown <- conf.cases
+          }
+      }
     }
     
     vec.vals <- c(id, date.char, date.num, as.double(tcf), as.double(conf), as.double(pres), as.double(total), as.double(ph), as.double(pnh), as.double(uinv) )
+    vec.county <- c(id, Barnstable, Berkshire, Bristol,
+    Dukes, Essex, Franklin, Hampden, Hampshire,
+    Middlesex, Nantucket, Norfolk, 
+    Plymouth, Suffolk, Worcester, Unknown)
     
-    #print(vec.vals)
     #print(conf)
     
     data2 <- rbind(data2, vec.vals)
+    county.data <- rbind(county.data, vec.county)
   }
 ```
+
+```{r}
+county.data
+```
+
 
 ```{r}
 data2["Date"] <- paste(data2$DateChar, data2$DateNum)
 data2
 ```
 
+
 ```{r}
 drops <- c("DateChar","DateNum")
 Data.Final <- data2[ , !(names(data2) %in% drops)]
-View(Data.Final)
+#View(Data.Final)
+#View(county.data)
+saveRDS(Data.Final, file="data-files/StateLevel.rdata")
+saveRDS(county.data, file="data-files/CountyLevel.rdata")
+
 ```
 
