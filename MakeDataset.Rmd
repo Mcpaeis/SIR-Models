@@ -71,23 +71,26 @@ data.init <- corpus_raw %>% filter(
     grepl(("Under Investigation"), text, ignore.case = TRUE)|
     # add the county data
     grepl("Barnstable", text, ignore.case = TRUE)| 
-    grepl("Pittsfield", text, ignore.case = TRUE)| 
-    grepl("Taunton", text, ignore.case = TRUE)| 
-    grepl("Edgartown", text, ignore.case = TRUE)| 
-    grepl("Salem,Lawrence", text, ignore.case = TRUE)| 
-    grepl("Springfield", text, ignore.case = TRUE)| 
-    grepl("Northampton", text, ignore.case = TRUE)| 
-    grepl("Lowell,Cambridge", text, ignore.case = TRUE)|
-    grepl("Lowell,Cambridge", text, ignore.case = TRUE)|
-    grepl("Lowell,Cambridge", text, ignore.case = TRUE)|
-    grepl("Lowell,Cambridge", text, ignore.case = TRUE)
+    grepl("Berkshire", text, ignore.case = TRUE)| 
+    grepl("Bristol", text, ignore.case = TRUE)| 
+    grepl("Dukes", text, ignore.case = TRUE)| 
+    grepl("Essex", text, ignore.case = TRUE)| 
+    grepl("Franklin", text, ignore.case = TRUE)| 
+    grepl("Hampden", text, ignore.case = TRUE)| 
+    grepl("Hampshire", text, ignore.case = TRUE)|
+    grepl("Middlesex", text, ignore.case = TRUE)|
+    grepl("Nantucket", text, ignore.case = TRUE)|
+    grepl("Norfolk", text, ignore.case = TRUE)|
+    grepl("Plymouth", text, ignore.case = TRUE)|
+    grepl("Suffolk", text, ignore.case = TRUE)|
+    grepl("Worcester", text, ignore.case = TRUE)
   
 )
 ```
 
 ```{r}
 data.init$text <- as.character(data.init$text)
-head(data.init)
+(data.init)
 ```
 
 ```{r}
