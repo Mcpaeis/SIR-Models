@@ -26,21 +26,19 @@ file_vector %>% head()
 
 ```{r}
 ###########
-#### Important Naming Convention for all the pdf files you want to extract the relevant data
+####  Important Naming Convention for all the pdf files you want to extract the relevant data
+####  covid-19-case-report-MONTH-DAY-YEAR
+###########
 
 # return the relevant files
 pdf_list <- file_vector[grepl("covid-19-case-report", file_vector)]
-#pdf_list
 ```
 
-```{r}
-# read the pdf text
-#pdf_text("data-files/covid/covid-19-case-report-3-10-2020.pdf") %>% strsplit(split = "\n")
-```
+
 
 ```{r}
 corpus_raw <- data.frame("file" = c(NULL),"text" = c(NULL))
- 
+# loop through read the raw document, append to the dataframe
 for (i in 1:length(pdf_list))
   {
     document_text <-  pdf_text(paste(path.files, "/", pdf_list[i], sep = "")) %>% readr::read_lines()
@@ -51,11 +49,13 @@ for (i in 1:length(pdf_list))
   }
 ```
 
+
 ```{r}
 head(corpus_raw)
 ```
 
 ```{r}
+# filter by relevant keywords
 data.init <- corpus_raw %>% filter(
   
   grepl(( "As of"), text, ignore.case = TRUE)|
@@ -89,41 +89,41 @@ data.init <- corpus_raw %>% filter(
 
 
 ```{r}
+# all the counties in Massachusetts
 county<- c("Barnstable","Berkshire", "Bristol","Dukes","Essex","Franklin","Hampden","Hampshire","Middlesex", "Nantucket","Norfolk","Plymouth","Suffolk","Worcester","Unknown")
 ```
 
 
 ```{r}
+# text is factor, convert to characters
 data.init$text <- as.character(data.init$text)
 head(data.init)
 ```
 
 
 ```{r}
-# get the unique ids
+# get the unique ids/covid files
 unique.ids <- unique(data.init$file)
 
-data2 <- data.frame(
-  "File" = c("Initial"), "DateChar" = c("Initial"), "DateNum" = c("Initial"),
-  "TotalConfirmed" = c(0), "Confirmed" = c(0), 
-  "Presumptive" = c(0), "Total" =c(0),
-  "PatientsHospitalized" =c(0),"PatientsNotHospitalized" = c(0),
-  "UnderInvestigation"  = c(0), stringsAsFactors = FALSE)
+# initialize state and county level frames
+state.data <- data.frame(
+  "File" = c("Initial"), "DateChar" = c("Initial"), "DateNum" = c("Initial"), "TotalConfirmed" = c(0), "Confirmed" = c(0), 
+  "Presumptive" = c(0), "Total" =c(0), "PatientsHospitalized" =c(0),"PatientsNotHospitalized" = c(0),"UnderInvestigation"  = c(0), stringsAsFactors = FALSE)
 
 county.data <- data.frame(
-  "File" = c("Initial"), "Barnstable" = c(0), "Berkshire"= c(0), "Bristol"=c(0), "Dukes"=c(0),"Essex"=c(0), "Franklin"=c(0), "Hampden"=c(0),"Hampshire"=c(0),"Middlesex"=c(0), "Nantucket"=c(0),"Norfolk"=c(0),"Plymouth"=c(0),"Suffolk"=c(0),"Worcester"=c(0),"Unknown"=c(0), stringsAsFactors = FALSE
+  "File" = c("Initial"), "Barnstable" = c(0), "Berkshire"= c(0), "Bristol"=c(0), "Dukes"=c(0),"Essex"=c(0), "Franklin"=c(0), "Hampden"=c(0),"Hampshire"=c(0),"Middlesex"=c(0), "Nantucket"=c(0), "Norfolk"=c(0), "Plymouth"=c(0), "Suffolk"=c(0), "Worcester"=c(0), "Unknown"=c(0), stringsAsFactors = FALSE
 )
 
 for (id in unique.ids)
   
   {
+    # select the dataframe for the given time period
     sub.set <- data.init[data.init$file==id, ]
-    # total confirmed cases
     len.list <- dim(sub.set)[1]
-    #print(len.list)
+    
+    # create county level initial holders
     date.char <- NA; date.num <- NA; tcf <- NA; conf <- NA; pres <- NA
     total <- NA; ph <- NA; pnh <- NA; uinv <- NA;
-    #print(len.list)
     
     # create county level initial holders
     Barnstable <- NA; Berkshire <- NA;Bristol<-NA; 
@@ -133,7 +133,7 @@ for (id in unique.ids)
     
     for (val in c(1:len.list))
     {
-      #char <- gsub("^[[:space:]]+", '', gsub("[^[:alpha:][:space:]]", '', sub.set$text[val])  )
+      # select 
       char <- gsub("[^[:alpha:][:space:]]", '', sub.set$text[val])
       char <- gsub("^[[:space:]]+", '', char)
       char <- gsub("[[:space:]]*$", '', char)
@@ -142,19 +142,15 @@ for (id in unique.ids)
       if (str_detect(char, "As of"))
         {
          date.char <- char
-         #print(date.char)
          date.num <- gsub("^[[:space:]]+", '', gsub("[^[:digit:][:space:]]", '', sub.set$text[val]) )
-         #print(date.num)
         }
       else if (char == "Total confirmed and presumptive positive cases" | char =="Confirmed Cases Reported")
         {
           tcf <- gsub("^[[:space:]]+", '', gsub("[^[:digit:][:space:]]", '', sub.set$text[val]) )
-          #print(tcf)
         }
       else if (char == "Confirmed")
         {
           conf <- gsub("^[[:space:]]+", '', gsub("[^[:digit:][:space:]]", '', sub.set$text[val]) )
-          #print(conf)
         }
       else if (char == "Presumptive")
         {
@@ -214,37 +210,43 @@ for (id in unique.ids)
       }
     }
     
-    vec.vals <- c(id, date.char, date.num, as.double(tcf), as.double(conf), as.double(pres), as.double(total), as.double(ph), as.double(pnh), as.double(uinv) )
+    vec.state <- c(
+      id, date.char, date.num, as.double(tcf), as.double(conf), as.double(pres), 
+      as.double(total), as.double(ph), as.double(pnh), as.double(uinv) )
+    
     vec.county <- c(id, Barnstable, Berkshire, Bristol,
     Dukes, Essex, Franklin, Hampden, Hampshire,
     Middlesex, Nantucket, Norfolk, 
     Plymouth, Suffolk, Worcester, Unknown)
     
-    #print(conf)
-    
-    data2 <- rbind(data2, vec.vals)
+    # add to dataframe
+    state.data <- rbind(state.data, vec.state)
     county.data <- rbind(county.data, vec.county)
   }
 ```
 
 ```{r}
-county.data
+head(county.data)
 ```
 
 
 ```{r}
-data2["Date"] <- paste(data2$DateChar, data2$DateNum)
-data2
+state.data["Date"] <- paste(state.data$DateChar, state.data$DateNum)
+head(state.data)
 ```
 
 
 ```{r}
 drops <- c("DateChar","DateNum")
-Data.Final <- data2[ , !(names(data2) %in% drops)]
-#View(Data.Final)
-#View(county.data)
-saveRDS(Data.Final, file="data-files/StateLevel.rdata")
-saveRDS(county.data, file="data-files/CountyLevel.rdata")
+state.data <- state.data[ , !(names(state.data) %in% drops)]
 
+saveRDS(state.data, file="data-files/StateLevel.rdata")
+saveRDS(county.data, file="data-files/CountyLevel.rdata")
+```
+
+
+```{r}
+View(state.data)
+View(county.data)
 ```
 
